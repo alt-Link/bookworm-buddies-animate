@@ -121,7 +121,7 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
       <CardContent className="p-4">
         <div className={`flex ${compact ? 'gap-3' : 'flex-col gap-4'}`}>
           {/* Book Cover */}
-          <div className={`relative ${compact ? 'w-16 h-24' : 'w-full h-64'} bg-gradient-warm rounded-lg overflow-hidden shadow-md group-hover:shadow-lg transition-all duration-300`}>
+          <div className={`relative ${compact ? 'w-16 h-24' : 'w-full h-64'} bg-gradient-warm rounded-lg overflow-hidden shadow-md group-hover:shadow-lg transition-all duration-300 p-2`}>
             {book.imageLinks?.thumbnail ? (
               <>
                 {!imageLoaded && (
@@ -130,7 +130,7 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
                  <img
                    src={book.imageLinks.thumbnail.replace('zoom=1', 'zoom=2')}
                    alt={book.title}
-                   className={`w-full h-full object-contain transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-105`}
+                   className={`w-full h-full object-contain transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-105 rounded`}
                    onLoad={() => setImageLoaded(true)}
                  />
               </>

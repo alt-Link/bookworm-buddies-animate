@@ -108,7 +108,7 @@ export function BookDetailsModal({
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {/* Book Cover */}
               <div className="flex justify-center">
-                <div className="relative w-full max-w-64 h-96 bg-gradient-warm rounded-lg overflow-hidden shadow-lg">
+                <div className="relative w-full max-w-64 h-96 bg-gradient-warm rounded-lg overflow-hidden shadow-lg p-3">
                   {book.imageLinks?.thumbnail ? (
                     <>
                       {!imageLoaded && (
@@ -117,7 +117,7 @@ export function BookDetailsModal({
                       <img
                         src={book.imageLinks.thumbnail.replace('zoom=1', 'zoom=3')}
                         alt={book.title}
-                        className={`w-full h-full object-contain transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+                        className={`w-full h-full object-contain transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} rounded`}
                         onLoad={() => setImageLoaded(true)}
                       />
                     </>
