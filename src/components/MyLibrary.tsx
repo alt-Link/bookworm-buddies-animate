@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { BookOpen, Target, Trophy, Clock, Star, TrendingUp, Calendar, Timer, Zap } from 'lucide-react';
+import { BookOpen, Target, Trophy, Clock, Star, TrendingUp, Calendar, Timer, Zap, Tag, X } from 'lucide-react';
 
 interface MyLibraryProps {
   libraryBooks: Map<string, { book: Book; status: ReadingStatus }>;
@@ -14,6 +14,7 @@ interface MyLibraryProps {
 
 export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
   const [activeTab, setActiveTab] = useState('all');
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const stats = useMemo(() => {
     const books = Array.from(libraryBooks.values());
@@ -76,24 +77,51 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
 
   const filteredBooks = useMemo(() => {
     const books = Array.from(libraryBooks.values());
+    
+    let filtered = books;
+    
+    // Filter by tab status
     switch (activeTab) {
       case 'reading':
-        return books.filter(b => b.status.status === 'reading');
+        filtered = books.filter(b => b.status.status === 'reading');
+        break;
       case 'finished':
-        return books.filter(b => b.status.status === 'finished').sort((a, b) => {
+        filtered = books.filter(b => b.status.status === 'finished').sort((a, b) => {
           // Sort by completion date, most recent first
           const dateA = a.status.dateCompleted ? new Date(a.status.dateCompleted).getTime() : 0;
           const dateB = b.status.dateCompleted ? new Date(b.status.dateCompleted).getTime() : 0;
           return dateB - dateA;
         });
+        break;
       case 'did-not-finish':
-        return books.filter(b => b.status.status === 'did-not-finish');
+        filtered = books.filter(b => b.status.status === 'did-not-finish');
+        break;
       case 're-read':
-        return books.filter(b => b.status.status === 're-read');
+        filtered = books.filter(b => b.status.status === 're-read');
+        break;
       default:
-        return books;
+        filtered = books;
     }
-  }, [libraryBooks, activeTab]);
+    
+    // Filter by selected tag
+    if (selectedTag) {
+      filtered = filtered.filter(({ status }) => 
+        status.tags && status.tags.includes(selectedTag)
+      );
+    }
+    
+    return filtered;
+  }, [libraryBooks, activeTab, selectedTag]);
+
+  const allTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    Array.from(libraryBooks.values()).forEach(({ status }) => {
+      if (status.tags) {
+        status.tags.forEach(tag => tagSet.add(tag));
+      }
+    });
+    return Array.from(tagSet).sort();
+  }, [libraryBooks]);
 
   if (libraryBooks.size === 0) {
     return (
@@ -237,6 +265,42 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
           </TabsTrigger>
         </TabsList>
 
+        {/* Tag filter */}
+        {allTags.length > 0 && (
+          <div className="space-y-3 p-4 bg-card rounded-lg border">
+            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+              <Tag className="w-4 h-4" />
+              Filter by tags:
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {allTags.map(tag => (
+                <Button
+                  key={tag}
+                  variant={selectedTag === tag ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedTag(selectedTag === tag ? null : tag)}
+                  className="h-8 text-xs"
+                >
+                  {tag}
+                  {selectedTag === tag && (
+                    <X className="w-3 h-3 ml-1" />
+                  )}
+                </Button>
+              ))}
+              {selectedTag && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedTag(null)}
+                  className="h-8 text-xs text-muted-foreground"
+                >
+                  Clear filter
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         <TabsContent value={activeTab} className="space-y-6">
           {filteredBooks.length === 0 ? (
             <div className="text-center py-12 space-y-4">
@@ -244,10 +308,14 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
               <div>
                 <h3 className="text-lg font-semibold">No books in this category</h3>
                 <p className="text-muted-foreground">
-                  {activeTab === 'reading' && "Start reading some books to see them here"}
-                  {activeTab === 'finished' && "Mark books as finished to build your completed collection"}
-                  {activeTab === 'did-not-finish' && "Books you didn't finish will appear here"}
-                  {activeTab === 're-read' && "Books you've re-read will appear here"}
+                  {selectedTag 
+                    ? `No books tagged with "${selectedTag}" in this status.`
+                    : activeTab === 'reading' && "Start reading some books to see them here"
+                    || activeTab === 'finished' && "Mark books as finished to build your completed collection"
+                    || activeTab === 'did-not-finish' && "Books you didn't finish will appear here"
+                    || activeTab === 're-read' && "Books you've re-read will appear here"
+                    || "No books found"
+                  }
                 </p>
               </div>
             </div>

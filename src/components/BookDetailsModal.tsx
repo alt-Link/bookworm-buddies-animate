@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Book, ReadingStatus } from './BookCard';
+import { TagManager } from './TagManager';
 import { toast } from '@/hooks/use-toast';
 
 interface BookDetailsModalProps {
@@ -27,11 +28,13 @@ export function BookDetailsModal({
 }: BookDetailsModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [tags, setTags] = useState<string[]>(readingStatus?.tags || []);
 
   const handleAddToLibrary = () => {
     const newStatus: ReadingStatus = {
       status: 'reading',
       dateAdded: new Date().toISOString(),
+      tags: tags,
     };
     
     onAddToLibrary(book);
@@ -45,6 +48,14 @@ export function BookDetailsModal({
     onClose();
   };
 
+  const handleTagsChange = (newTags: string[]) => {
+    setTags(newTags);
+    if (readingStatus) {
+      const updatedStatus = { ...readingStatus, tags: newTags };
+      onStatusChange(book.id, updatedStatus);
+    }
+  };
+
   const handleStatusChange = async (newStatus: ReadingStatus['status']) => {
     setIsLoading(true);
     
@@ -52,6 +63,7 @@ export function BookDetailsModal({
       ...readingStatus,
       status: newStatus,
       dateAdded: readingStatus?.dateAdded || new Date().toISOString(),
+      tags: tags,
     };
 
     if (newStatus === 'reading' && !readingStatus?.dateStarted) {
@@ -233,6 +245,16 @@ export function BookDetailsModal({
                         />
                       </div>
                     </div>
+                  </div>
+                )}
+
+                {/* Tags */}
+                {readingStatus && (
+                  <div className="space-y-2">
+                    <TagManager 
+                      selectedTags={tags}
+                      onTagsChange={handleTagsChange}
+                    />
                   </div>
                 )}
 
