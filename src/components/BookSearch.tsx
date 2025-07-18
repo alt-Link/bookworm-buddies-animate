@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { Search, Loader2, BookOpen } from 'lucide-react';
+import { Search, Loader2, BookOpen, Tag } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { BookCard, Book } from './BookCard';
 import { toast } from '@/hooks/use-toast';
 
@@ -29,13 +30,20 @@ interface GoogleBooksResponse {
   }[];
 }
 
+const popularGenres = [
+  'Fiction', 'Mystery', 'Romance', 'Science Fiction', 'Fantasy', 
+  'Thriller', 'Biography', 'History', 'Self Help', 'Business',
+  'Psychology', 'Philosophy', 'Art', 'Cooking', 'Health'
+];
+
 export function BookSearch({ onAddToLibrary, libraryBooks }: BookSearchProps) {
   const [query, setQuery] = useState('');
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [selectedGenre, setSelectedGenre] = useState<string | null>(null);
 
-  const searchBooks = useCallback(async (searchQuery: string) => {
+  const searchBooks = useCallback(async (searchQuery: string, isGenreSearch = false) => {
     if (!searchQuery.trim()) {
       toast({
         title: "Search Required",
@@ -49,8 +57,10 @@ export function BookSearch({ onAddToLibrary, libraryBooks }: BookSearchProps) {
     setHasSearched(true);
 
     try {
+      // For genre searches, use subject parameter for better results
+      const queryParam = isGenreSearch ? `subject:${encodeURIComponent(searchQuery)}` : encodeURIComponent(searchQuery);
       const response = await fetch(
-      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=20&orderBy=relevance&key=AIzaSyDNSS-5GTP3_W-v1X-aYcV8MyVgsDUuYdg`
+        `https://www.googleapis.com/books/v1/volumes?q=${queryParam}&maxResults=20&orderBy=relevance&key=AIzaSyDNSS-5GTP3_W-v1X-aYcV8MyVgsDUuYdg`
       );
       
       if (!response.ok) {
@@ -94,7 +104,14 @@ export function BookSearch({ onAddToLibrary, libraryBooks }: BookSearchProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setSelectedGenre(null);
     searchBooks(query);
+  };
+
+  const handleGenreClick = (genre: string) => {
+    setSelectedGenre(genre);
+    setQuery('');
+    searchBooks(genre, true);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -144,6 +161,32 @@ export function BookSearch({ onAddToLibrary, libraryBooks }: BookSearchProps) {
         </CardContent>
       </Card>
 
+      {/* Genre Browsing */}
+      {!hasSearched && (
+        <Card className="bg-card border-border shadow-md">
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-primary" />
+                <h3 className="text-lg font-semibold">Browse by Genre</h3>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {popularGenres.map((genre) => (
+                  <Badge
+                    key={genre}
+                    variant={selectedGenre === genre ? "default" : "outline"}
+                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors px-3 py-1"
+                    onClick={() => handleGenreClick(genre)}
+                  >
+                    {genre}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Search Results */}
       {isLoading && (
         <div className="flex items-center justify-center py-12">
@@ -167,7 +210,9 @@ export function BookSearch({ onAddToLibrary, libraryBooks }: BookSearchProps) {
       {books.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold text-foreground">Search Results</h2>
+            <h2 className="text-2xl font-bold text-foreground">
+              {selectedGenre ? `${selectedGenre} Books` : 'Search Results'}
+            </h2>
             <span className="text-muted-foreground">{books.length} books found</span>
           </div>
           
