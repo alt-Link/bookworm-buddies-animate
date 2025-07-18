@@ -30,7 +30,7 @@ export function BookDetailsModal({
 
   const handleAddToLibrary = () => {
     const newStatus: ReadingStatus = {
-      status: 'want-to-read',
+      status: 'reading',
       dateAdded: new Date().toISOString(),
     };
     
@@ -58,7 +58,7 @@ export function BookDetailsModal({
       updatedStatus.dateStarted = new Date().toISOString();
     }
     
-    if (newStatus === 'read') {
+    if (newStatus === 'finished' || newStatus === 'did-not-finish') {
       updatedStatus.dateCompleted = new Date().toISOString();
       if (!readingStatus?.dateStarted) {
         updatedStatus.dateStarted = new Date().toISOString();
@@ -80,18 +80,20 @@ export function BookDetailsModal({
 
   const getStatusColor = (status: ReadingStatus['status']) => {
     switch (status) {
-      case 'want-to-read': return 'bg-accent';
       case 'reading': return 'bg-primary';
-      case 'read': return 'bg-secondary';
+      case 'finished': return 'bg-secondary';
+      case 'did-not-finish': return 'bg-destructive';
+      case 're-read': return 'bg-accent';
       default: return 'bg-muted';
     }
   };
 
   const getStatusText = (status: ReadingStatus['status']) => {
     switch (status) {
-      case 'want-to-read': return 'Want to Read';
       case 'reading': return 'Currently Reading';
-      case 'read': return 'Read';
+      case 'finished': return 'Finished';
+      case 'did-not-finish': return 'Did Not Finish';
+      case 're-read': return 'Re-read';
       default: return '';
     }
   };
@@ -260,29 +262,15 @@ export function BookDetailsModal({
                     </Button>
                   ) : (
                     <>
-                      {readingStatus.status !== 'read' && (
-                        <Button
-                          onClick={() => handleStatusChange('read')}
-                          variant="default"
-                          className="flex-1"
-                          disabled={isLoading}
-                        >
-                          <Check className="w-4 h-4" />
-                          Mark as Read
-                        </Button>
-                      )}
-                      
-                      {readingStatus.status === 'want-to-read' && (
-                        <Button
-                          onClick={() => handleStatusChange('reading')}
-                          variant="secondary"
-                          className="flex-1"
-                          disabled={isLoading}
-                        >
-                          <BookOpen className="w-4 h-4" />
-                          Start Reading
-                        </Button>
-                      )}
+                       <Button
+                         onClick={() => handleStatusChange('finished')}
+                         variant="default"
+                         className="flex-1"
+                         disabled={isLoading}
+                       >
+                         <Check className="w-4 h-4" />
+                         Mark as Finished
+                       </Button>
                     </>
                   )}
                   

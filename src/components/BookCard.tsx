@@ -23,7 +23,7 @@ export interface Book {
 }
 
 export interface ReadingStatus {
-  status: 'want-to-read' | 'reading' | 'read';
+  status: 'reading' | 'finished' | 'did-not-finish' | 're-read';
   dateAdded: string;
   dateStarted?: string;
   dateCompleted?: string;
@@ -67,7 +67,7 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
       updatedStatus.dateStarted = new Date().toISOString();
     }
     
-    if (newStatus === 'read') {
+    if (newStatus === 'finished' || newStatus === 'did-not-finish') {
       updatedStatus.dateCompleted = new Date().toISOString();
       if (!readingStatus?.dateStarted) {
         updatedStatus.dateStarted = new Date().toISOString();
@@ -86,7 +86,7 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
 
   const handleAddToLibrary = () => {
     onAddToLibrary(book);
-    handleStatusChange('want-to-read');
+    handleStatusChange('reading');
   };
 
   const handleProgressSave = (updatedStatus: ReadingStatus) => {
@@ -100,18 +100,20 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
 
   const getStatusColor = (status: ReadingStatus['status']) => {
     switch (status) {
-      case 'want-to-read': return 'bg-accent';
       case 'reading': return 'bg-primary';
-      case 'read': return 'bg-secondary';
+      case 'finished': return 'bg-secondary';
+      case 'did-not-finish': return 'bg-destructive';
+      case 're-read': return 'bg-accent';
       default: return 'bg-muted';
     }
   };
 
   const getStatusText = (status: ReadingStatus['status']) => {
     switch (status) {
-      case 'want-to-read': return 'Want to Read';
       case 'reading': return 'Currently Reading';
-      case 'read': return 'Read';
+      case 'finished': return 'Finished';
+      case 'did-not-finish': return 'Did Not Finish';
+      case 're-read': return 'Re-read';
       default: return '';
     }
   };
@@ -236,9 +238,9 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
               </Button>
             )}
             
-            {readingStatus.status !== 'read' && (
+            {readingStatus.status !== 'finished' && readingStatus.status !== 'did-not-finish' && (
               <Button
-                onClick={() => handleStatusChange('read')}
+                onClick={() => handleStatusChange('finished')}
                 variant="default"
                 size={compact ? "sm" : "default"}
                 className={readingStatus.status === 'reading' ? "flex-1" : "flex-1"}
@@ -249,19 +251,8 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
               </Button>
             )}
             
-            {readingStatus.status === 'want-to-read' && (
-              <Button
-                onClick={() => handleStatusChange('reading')}
-                variant="secondary"
-                size={compact ? "sm" : "default"}
-                disabled={isLoading}
-              >
-                <BookOpen className="w-4 h-4" />
-                Start Reading
-              </Button>
-            )}
 
-            {readingStatus.status === 'read' && readingStatus.notes && (
+            {(readingStatus.status === 'finished' || readingStatus.status === 'did-not-finish' || readingStatus.status === 're-read') && readingStatus.notes && (
               <Button
                 onClick={() => setShowProgressDialog(true)}
                 variant="outline"

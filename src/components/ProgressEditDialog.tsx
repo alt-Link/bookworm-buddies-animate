@@ -62,8 +62,8 @@ export function ProgressEditDialog({ book, readingStatus, isOpen, onClose, onSav
     }
 
     // Auto-complete if reached the end
-    if (totalPages > 0 && currentPage >= totalPages && readingStatus.status !== 'read') {
-      updatedStatus.status = 'read';
+    if (totalPages > 0 && currentPage >= totalPages && readingStatus.status !== 'finished') {
+      updatedStatus.status = 'finished';
       updatedStatus.dateCompleted = now;
       toast({
         title: "🎉 Book Completed!",

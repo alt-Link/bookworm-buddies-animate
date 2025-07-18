@@ -32,7 +32,7 @@ const Index = () => {
 
   const handleAddToLibrary = (book: Book) => {
     const status: ReadingStatus = {
-      status: 'want-to-read',
+      status: 'reading',
       dateAdded: new Date().toISOString(),
     };
 

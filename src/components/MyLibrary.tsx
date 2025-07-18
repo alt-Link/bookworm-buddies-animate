@@ -17,9 +17,10 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
 
   const stats = useMemo(() => {
     const books = Array.from(libraryBooks.values());
-    const readBooks = books.filter(b => b.status.status === 'read');
+    const readBooks = books.filter(b => b.status.status === 'finished');
     const currentlyReading = books.filter(b => b.status.status === 'reading');
-    const wantToRead = books.filter(b => b.status.status === 'want-to-read');
+    const didNotFinish = books.filter(b => b.status.status === 'did-not-finish');
+    const reRead = books.filter(b => b.status.status === 're-read');
     
     const totalPages = readBooks.reduce((acc, book) => {
       return acc + (book.book.pageCount || 0);
@@ -63,7 +64,8 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
       totalBooks: books.length,
       readBooks: readBooks.length,
       currentlyReading: currentlyReading.length,
-      wantToRead: wantToRead.length,
+      didNotFinish: didNotFinish.length,
+      reRead: reRead.length,
       totalPages,
       booksThisYear,
       totalReadingMinutes,
@@ -77,22 +79,17 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
     switch (activeTab) {
       case 'reading':
         return books.filter(b => b.status.status === 'reading');
-      case 'read':
-        return books.filter(b => b.status.status === 'read').sort((a, b) => {
+      case 'finished':
+        return books.filter(b => b.status.status === 'finished').sort((a, b) => {
           // Sort by completion date, most recent first
           const dateA = a.status.dateCompleted ? new Date(a.status.dateCompleted).getTime() : 0;
           const dateB = b.status.dateCompleted ? new Date(b.status.dateCompleted).getTime() : 0;
           return dateB - dateA;
         });
-      case 'want-to-read':
-        return books.filter(b => b.status.status === 'want-to-read');
-      case 'progress':
-        return books.filter(b => b.status.status === 'reading' && b.book.pageCount && b.status.currentPage)
-          .sort((a, b) => {
-            const progressA = (a.status.currentPage || 0) / (a.book.pageCount || 1);
-            const progressB = (b.status.currentPage || 0) / (b.book.pageCount || 1);
-            return progressB - progressA; // Higher progress first
-          });
+      case 'did-not-finish':
+        return books.filter(b => b.status.status === 'did-not-finish');
+      case 're-read':
+        return books.filter(b => b.status.status === 're-read');
       default:
         return books;
     }
@@ -165,11 +162,11 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
           </CardContent>
         </Card>
 
-        <Card className="bg-secondary border-0 hover:scale-105 transition-transform duration-300">
+        <Card className="bg-destructive border-0 hover:scale-105 transition-transform duration-300">
           <CardContent className="p-4 text-center">
-            <Target className="w-6 h-6 mx-auto mb-2 text-primary" />
-            <div className="text-2xl font-bold text-primary">{stats.wantToRead}</div>
-            <div className="text-xs text-muted-foreground">Want to Read</div>
+            <Target className="w-6 h-6 mx-auto mb-2 text-destructive-foreground" />
+            <div className="text-2xl font-bold text-destructive-foreground">{stats.didNotFinish}</div>
+            <div className="text-xs text-destructive-foreground opacity-90">Did Not Finish</div>
           </CardContent>
         </Card>
 
@@ -229,14 +226,14 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
           <TabsTrigger value="reading" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
             Reading ({stats.currentlyReading})
           </TabsTrigger>
-          <TabsTrigger value="progress" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            Progress
+          <TabsTrigger value="finished" className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
+            Finished ({stats.readBooks})
           </TabsTrigger>
-          <TabsTrigger value="read" className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
-            Read ({stats.readBooks})
+          <TabsTrigger value="did-not-finish" className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground">
+            Did Not Finish ({stats.didNotFinish})
           </TabsTrigger>
-          <TabsTrigger value="want-to-read" className="data-[state=active]:bg-muted data-[state=active]:text-foreground">
-            Want to Read ({stats.wantToRead})
+          <TabsTrigger value="re-read" className="data-[state=active]:bg-muted data-[state=active]:text-foreground">
+            Re-read ({stats.reRead})
           </TabsTrigger>
         </TabsList>
 
@@ -248,9 +245,9 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
                 <h3 className="text-lg font-semibold">No books in this category</h3>
                 <p className="text-muted-foreground">
                   {activeTab === 'reading' && "Start reading some books to see them here"}
-                  {activeTab === 'read' && "Mark books as read to build your completed collection"}
-                  {activeTab === 'want-to-read' && "Add books to your wishlist to see them here"}
-                  {activeTab === 'progress' && "Books with reading progress will appear here"}
+                  {activeTab === 'finished' && "Mark books as finished to build your completed collection"}
+                  {activeTab === 'did-not-finish' && "Books you didn't finish will appear here"}
+                  {activeTab === 're-read' && "Books you've re-read will appear here"}
                 </p>
               </div>
             </div>
