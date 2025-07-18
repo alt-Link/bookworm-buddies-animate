@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { ProgressEditDialog } from './ProgressEditDialog';
+import { BookDetailsModal } from './BookDetailsModal';
 import { toast } from '@/hooks/use-toast';
 
 export interface Book {
@@ -51,6 +52,7 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [showProgressDialog, setShowProgressDialog] = useState(false);
+  const [showBookDetails, setShowBookDetails] = useState(false);
 
   const handleStatusChange = async (newStatus: ReadingStatus['status']) => {
     setIsLoading(true);
@@ -125,12 +127,12 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
                 {!imageLoaded && (
                   <div className="absolute inset-0 bg-gradient-warm animate-shimmer bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.4),transparent)] bg-[length:200%_100%]" />
                 )}
-                <img
-                  src={book.imageLinks.thumbnail.replace('zoom=1', 'zoom=2')}
-                  alt={book.title}
-                  className={`w-full h-full object-cover transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-110`}
-                  onLoad={() => setImageLoaded(true)}
-                />
+                 <img
+                   src={book.imageLinks.thumbnail.replace('zoom=1', 'zoom=2')}
+                   alt={book.title}
+                   className={`w-full h-full object-contain transition-all duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'} group-hover:scale-105`}
+                   onLoad={() => setImageLoaded(true)}
+                 />
               </>
             ) : (
               <div className="w-full h-full bg-gradient-warm flex items-center justify-center">
@@ -147,9 +149,12 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
 
           {/* Book Details */}
           <div className={`flex-1 ${compact ? '' : 'mt-2'}`}>
-            <h3 className={`font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors ${compact ? 'text-sm' : 'text-lg'}`}>
-              {book.title}
-            </h3>
+            <h3 
+              className={`font-semibold text-foreground line-clamp-2 group-hover:text-primary transition-colors cursor-pointer ${compact ? 'text-sm' : 'text-lg'}`}
+              onClick={() => setShowBookDetails(true)}
+            >
+               {book.title}
+             </h3>
             
             {book.authors && (
               <p className={`text-muted-foreground ${compact ? 'text-xs' : 'text-sm'} mt-1`}>
@@ -271,15 +276,25 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
         )}
 
         {/* Progress Edit Dialog */}
-        {readingStatus && (
-          <ProgressEditDialog
-            book={book}
-            readingStatus={readingStatus}
-            isOpen={showProgressDialog}
-            onClose={() => setShowProgressDialog(false)}
-            onSave={handleProgressSave}
-          />
-        )}
+         {readingStatus && (
+           <ProgressEditDialog
+             book={book}
+             readingStatus={readingStatus}
+             isOpen={showProgressDialog}
+             onClose={() => setShowProgressDialog(false)}
+             onSave={handleProgressSave}
+           />
+         )}
+
+         {/* Book Details Modal */}
+         <BookDetailsModal
+           book={book}
+           readingStatus={readingStatus}
+           isOpen={showBookDetails}
+           onClose={() => setShowBookDetails(false)}
+           onAddToLibrary={onAddToLibrary}
+           onStatusChange={onStatusChange}
+         />
       </CardFooter>
     </Card>
   );
