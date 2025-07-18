@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { Heart, BookOpen, Check, Plus, Star } from 'lucide-react';
+import { Heart, BookOpen, Check, Plus, Star, Edit, BarChart3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { ProgressEditDialog } from './ProgressEditDialog';
 import { toast } from '@/hooks/use-toast';
 
 export interface Book {
@@ -25,6 +27,16 @@ export interface ReadingStatus {
   dateStarted?: string;
   dateCompleted?: string;
   rating?: number;
+  currentPage?: number;
+  personalRating?: number;
+  notes?: string;
+  readingGoal?: string;
+  readingSessions?: {
+    date: string;
+    minutes: number;
+    pagesRead: number;
+  }[];
+  lastUpdated?: string;
 }
 
 interface BookCardProps {
@@ -38,6 +50,7 @@ interface BookCardProps {
 export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, compact = false }: BookCardProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [showProgressDialog, setShowProgressDialog] = useState(false);
 
   const handleStatusChange = async (newStatus: ReadingStatus['status']) => {
     setIsLoading(true);
@@ -72,6 +85,15 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
   const handleAddToLibrary = () => {
     onAddToLibrary(book);
     handleStatusChange('want-to-read');
+  };
+
+  const handleProgressSave = (updatedStatus: ReadingStatus) => {
+    onStatusChange(book.id, updatedStatus);
+  };
+
+  const getProgressPercentage = () => {
+    if (!readingStatus?.currentPage || !book.pageCount) return 0;
+    return Math.round((readingStatus.currentPage / book.pageCount) * 100);
   };
 
   const getStatusColor = (status: ReadingStatus['status']) => {
@@ -149,8 +171,34 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
                     <span>{book.averageRating.toFixed(1)}</span>
                   </div>
                 )}
+                {readingStatus?.personalRating && (
+                  <div className="flex items-center gap-1">
+                    <Star className="w-3 h-3 fill-primary text-primary" />
+                    <span>{readingStatus.personalRating}/5 (You)</span>
+                  </div>
+                )}
                 {book.pageCount && <span>{book.pageCount} pages</span>}
                 {book.publishedDate && <span>{book.publishedDate.split('-')[0]}</span>}
+              </div>
+            )}
+
+            {/* Progress Bar for Reading Books */}
+            {readingStatus?.status === 'reading' && book.pageCount && readingStatus.currentPage && (
+              <div className="mt-3 space-y-1">
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Page {readingStatus.currentPage} of {book.pageCount}</span>
+                  <span>{getProgressPercentage()}%</span>
+                </div>
+                <Progress value={getProgressPercentage()} className="h-2" />
+              </div>
+            )}
+
+            {/* Reading Notes Preview */}
+            {!compact && readingStatus?.notes && (
+              <div className="mt-2 p-2 bg-muted/50 rounded text-xs">
+                <div className="text-muted-foreground line-clamp-2">
+                  "{readingStatus.notes.substring(0, 100)}{readingStatus.notes.length > 100 ? '...' : ''}"
+                </div>
               </div>
             )}
           </div>
@@ -171,12 +219,24 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
           </Button>
         ) : (
           <>
+            {readingStatus.status === 'reading' && (
+              <Button
+                onClick={() => setShowProgressDialog(true)}
+                variant="secondary"
+                size={compact ? "sm" : "default"}
+                className="flex-1"
+              >
+                <Edit className="w-4 h-4" />
+                Update Progress
+              </Button>
+            )}
+            
             {readingStatus.status !== 'read' && (
               <Button
                 onClick={() => handleStatusChange('read')}
                 variant="default"
                 size={compact ? "sm" : "default"}
-                className="flex-1"
+                className={readingStatus.status === 'reading' ? "flex-1" : "flex-1"}
                 disabled={isLoading}
               >
                 <Check className="w-4 h-4" />
@@ -195,7 +255,30 @@ export function BookCard({ book, readingStatus, onStatusChange, onAddToLibrary, 
                 Start Reading
               </Button>
             )}
+
+            {readingStatus.status === 'read' && readingStatus.notes && (
+              <Button
+                onClick={() => setShowProgressDialog(true)}
+                variant="outline"
+                size={compact ? "sm" : "default"}
+                className="flex-1"
+              >
+                <BarChart3 className="w-4 h-4" />
+                View Details
+              </Button>
+            )}
           </>
+        )}
+
+        {/* Progress Edit Dialog */}
+        {readingStatus && (
+          <ProgressEditDialog
+            book={book}
+            readingStatus={readingStatus}
+            isOpen={showProgressDialog}
+            onClose={() => setShowProgressDialog(false)}
+            onSave={handleProgressSave}
+          />
         )}
       </CardFooter>
     </Card>

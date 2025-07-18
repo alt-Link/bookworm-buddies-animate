@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { BookOpen, Target, Trophy, Clock, Star, TrendingUp } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { BookOpen, Target, Trophy, Clock, Star, TrendingUp, Calendar, Timer, Zap } from 'lucide-react';
 
 interface MyLibraryProps {
   libraryBooks: Map<string, { book: Book; status: ReadingStatus }>;
@@ -30,6 +31,34 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
       return dateCompleted && new Date(dateCompleted).getFullYear() === currentYear;
     }).length;
 
+    // Calculate total reading time
+    const totalReadingMinutes = books.reduce((acc, { status }) => {
+      if (status.readingSessions) {
+        return acc + status.readingSessions.reduce((sessionAcc, session) => sessionAcc + session.minutes, 0);
+      }
+      return acc;
+    }, 0);
+
+    // Calculate average reading progress for currently reading books
+    const avgProgress = currentlyReading.length > 0 
+      ? currentlyReading.reduce((acc, { book, status }) => {
+          if (book.pageCount && status.currentPage) {
+            return acc + (status.currentPage / book.pageCount);
+          }
+          return acc;
+        }, 0) / currentlyReading.length * 100
+      : 0;
+
+    // Calculate reading streak (days with reading activity)
+    const readingDays = new Set();
+    books.forEach(({ status }) => {
+      if (status.readingSessions) {
+        status.readingSessions.forEach(session => {
+          readingDays.add(new Date(session.date).toDateString());
+        });
+      }
+    });
+
     return {
       totalBooks: books.length,
       readBooks: readBooks.length,
@@ -37,6 +66,9 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
       wantToRead: wantToRead.length,
       totalPages,
       booksThisYear,
+      totalReadingMinutes,
+      avgProgress: Math.round(avgProgress),
+      readingDays: readingDays.size,
     };
   }, [libraryBooks]);
 
@@ -46,9 +78,21 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
       case 'reading':
         return books.filter(b => b.status.status === 'reading');
       case 'read':
-        return books.filter(b => b.status.status === 'read');
+        return books.filter(b => b.status.status === 'read').sort((a, b) => {
+          // Sort by completion date, most recent first
+          const dateA = a.status.dateCompleted ? new Date(a.status.dateCompleted).getTime() : 0;
+          const dateB = b.status.dateCompleted ? new Date(b.status.dateCompleted).getTime() : 0;
+          return dateB - dateA;
+        });
       case 'want-to-read':
         return books.filter(b => b.status.status === 'want-to-read');
+      case 'progress':
+        return books.filter(b => b.status.status === 'reading' && b.book.pageCount && b.status.currentPage)
+          .sort((a, b) => {
+            const progressA = (a.status.currentPage || 0) / (a.book.pageCount || 1);
+            const progressB = (b.status.currentPage || 0) / (b.book.pageCount || 1);
+            return progressB - progressA; // Higher progress first
+          });
       default:
         return books;
     }
@@ -96,7 +140,7 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
   return (
     <div className="space-y-8">
       {/* Statistics Dashboard */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="bg-gradient-primary text-primary-foreground border-0 hover:scale-105 transition-transform duration-300">
           <CardContent className="p-4 text-center">
             <BookOpen className="w-6 h-6 mx-auto mb-2" />
@@ -144,16 +188,49 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
             <div className="text-xs opacity-90">This Year</div>
           </CardContent>
         </Card>
+
+        {stats.totalReadingMinutes > 0 && (
+          <Card className="bg-gradient-warm border-0 hover:scale-105 transition-transform duration-300">
+            <CardContent className="p-4 text-center">
+              <Timer className="w-6 h-6 mx-auto mb-2 text-primary" />
+              <div className="text-2xl font-bold text-primary">{Math.round(stats.totalReadingMinutes / 60)}</div>
+              <div className="text-xs text-muted-foreground">Hours Read</div>
+            </CardContent>
+          </Card>
+        )}
+
+        {stats.currentlyReading > 0 && stats.avgProgress > 0 && (
+          <Card className="bg-accent text-accent-foreground border-0 hover:scale-105 transition-transform duration-300">
+            <CardContent className="p-4 text-center">
+              <Zap className="w-6 h-6 mx-auto mb-2" />
+              <div className="text-2xl font-bold">{stats.avgProgress}%</div>
+              <div className="text-xs opacity-90">Avg Progress</div>
+            </CardContent>
+          </Card>
+        )}
+
+        {stats.readingDays > 0 && (
+          <Card className="bg-secondary border-0 hover:scale-105 transition-transform duration-300">
+            <CardContent className="p-4 text-center">
+              <Calendar className="w-6 h-6 mx-auto mb-2 text-primary" />
+              <div className="text-2xl font-bold text-primary">{stats.readingDays}</div>
+              <div className="text-xs text-muted-foreground">Reading Days</div>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Library Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-card border border-border">
+        <TabsList className="grid w-full grid-cols-5 bg-card border border-border">
           <TabsTrigger value="all" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             All ({stats.totalBooks})
           </TabsTrigger>
           <TabsTrigger value="reading" className="data-[state=active]:bg-accent data-[state=active]:text-accent-foreground">
             Reading ({stats.currentlyReading})
+          </TabsTrigger>
+          <TabsTrigger value="progress" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            Progress
           </TabsTrigger>
           <TabsTrigger value="read" className="data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground">
             Read ({stats.readBooks})
@@ -173,6 +250,7 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
                   {activeTab === 'reading' && "Start reading some books to see them here"}
                   {activeTab === 'read' && "Mark books as read to build your completed collection"}
                   {activeTab === 'want-to-read' && "Add books to your wishlist to see them here"}
+                  {activeTab === 'progress' && "Books with reading progress will appear here"}
                 </p>
               </div>
             </div>
