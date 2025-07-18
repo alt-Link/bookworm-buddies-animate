@@ -50,7 +50,7 @@ export function BookSearch({ onAddToLibrary, libraryBooks }: BookSearchProps) {
 
     try {
       const response = await fetch(
-        `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=20&orderBy=relevance`
+      `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=20&orderBy=relevance&key=AIzaSyDNSS-5GTP3_W-v1X-aYcV8MyVgsDUuYdg`
       );
       
       if (!response.ok) {
