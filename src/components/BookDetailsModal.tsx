@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Book, ReadingStatus } from './BookCard';
 import { TagManager } from './TagManager';
+import { ReReadLog } from './ReReadLog';
 import { toast } from '@/hooks/use-toast';
 
 interface BookDetailsModalProps {
@@ -256,6 +257,15 @@ export function BookDetailsModal({
                       onTagsChange={handleTagsChange}
                     />
                   </div>
+                )}
+
+                {/* Re-read Log */}
+                {readingStatus && (readingStatus.status === 're-read' || (readingStatus.reReadDates && readingStatus.reReadDates.length > 0)) && (
+                  <ReReadLog
+                    book={book}
+                    status={readingStatus}
+                    onStatusChange={onStatusChange}
+                  />
                 )}
 
                 {/* Reading Notes */}

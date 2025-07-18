@@ -22,6 +22,15 @@ export interface Book {
   categories?: string[];
 }
 
+export interface ReReadEntry {
+  id: string;
+  dateStarted?: string;
+  dateCompleted?: string;
+  rating?: number;
+  notes?: string;
+  readingTime?: number;
+}
+
 export interface ReadingStatus {
   status: 'reading' | 'finished' | 'did-not-finish' | 're-read';
   dateAdded: string;
@@ -39,6 +48,7 @@ export interface ReadingStatus {
   }[];
   lastUpdated?: string;
   tags?: string[];
+  reReadDates?: ReReadEntry[];
 }
 
 interface BookCardProps {

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { BookOpen, Target, Trophy, Clock, Star, TrendingUp, Calendar, Timer, Zap, Tag, X } from 'lucide-react';
+import { ReadingHeatmap } from './ReadingHeatmap';
 
 interface MyLibraryProps {
   libraryBooks: Map<string, { book: Book; status: ReadingStatus }>;
@@ -164,6 +165,9 @@ export function MyLibrary({ libraryBooks, onStatusChange }: MyLibraryProps) {
 
   return (
     <div className="space-y-8">
+      {/* Reading Heatmap */}
+      <ReadingHeatmap libraryBooks={libraryBooks} />
+
       {/* Statistics Dashboard */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <Card className="bg-gradient-primary text-primary-foreground border-0 hover:scale-105 transition-transform duration-300">
